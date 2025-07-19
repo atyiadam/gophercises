@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+// PathToUrl represents a single path-to-URL mapping from YAML
+type PathToUrl struct {
+	Path string `yaml:"path"`
+	Url  string `yaml:"url"`
+}
+
 // MapHandler will return an http.HandlerFunc (which also
 // implements http.Handler) that will attempt to map any
 // paths (keys in the map) to their corresponding URL (values
@@ -13,7 +19,6 @@ import (
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		if path, ok := pathsToUrls[r.URL.Path]; ok {
 			http.Redirect(w, r, path, 302)
 		} else {
@@ -39,17 +44,12 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	type PathToUrl struct {
-		Path string `yaml:"path"`
-		Url  string `yaml:"url"`
-	}
-
 	yamlPathToUrls := []PathToUrl{}
 	pathToUrls := make(map[string]string)
 
 	err := yaml.Unmarshal(yml, &yamlPathToUrls)
 	if err != nil {
-		return MapHandler(pathToUrls, fallback), err
+		return nil, err
 	}
 
 	for _, v := range yamlPathToUrls {
