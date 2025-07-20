@@ -14,27 +14,22 @@ var fileVar string
 func main() {
 	mux := defaultMux()
 
-	yaml, err := openYAML(fileVar)
+	data, err := os.ReadFile(fileVar)
+
 	if err != nil {
-		log.Fatalf("Could not open YAML file '%s': %v", fileVar, err)
+		log.Fatalf("Could not open file '%s', '%v'", fileVar, err)
 	}
 
-	yamlHandler, err := urlshort.YAMLHandler([]byte(yaml), mux)
+	// yamlHandler, err := urlshort.YAMLHandler([]byte(yaml), mux)
+	jsonHandler, err := urlshort.JSONHandler(data, mux)
 	if err != nil {
 		log.Fatalf("Error parsing YAML: %v", err)
 	}
+
 	fmt.Println("Starting the server on :8080")
-	http.ListenAndServe(":8080", yamlHandler)
-}
 
-func openYAML(file string) ([]byte, error) {
-	data, err := os.ReadFile(file)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	http.ListenAndServe(":8080", jsonHandler)
+	// http.ListenAndServe(":8080", yamlHandler)
 }
 
 func defaultMux() *http.ServeMux {
@@ -44,7 +39,7 @@ func defaultMux() *http.ServeMux {
 }
 
 func init() {
-	flag.StringVar(&fileVar, "file", "input.yaml", "YAML file for path to URL mappings")
+	flag.StringVar(&fileVar, "file", "input.json", "JSON file for path to URL mappings")
 	flag.Parse()
 }
 

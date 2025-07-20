@@ -1,9 +1,9 @@
 package urlshort
 
 import (
-	"net/http"
-
+	"encoding/json"
 	"gopkg.in/yaml.v2"
+	"net/http"
 )
 
 // PathToUrl represents a single path-to-URL mapping from YAML
@@ -62,6 +62,29 @@ func parseYAML(yml []byte) (map[string]string, error) {
 	}
 
 	for _, v := range yamlPathToUrls {
+		pathToUrls[v.Path] = v.Url
+	}
+
+	return pathToUrls, nil
+}
+
+func JSONHandler(jsonBlob []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	pathToUrls, err := parseJSON(jsonBlob)
+	if err != nil {
+		return nil, err
+	}
+	return MapHandler(pathToUrls, fallback), nil
+}
+
+func parseJSON(jsonBlob []byte) (map[string]string, error) {
+	jsonPathToUrls := []PathToUrl{}
+	pathToUrls := make(map[string]string)
+	err := json.Unmarshal(jsonBlob, &jsonPathToUrls)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range jsonPathToUrls {
 		pathToUrls[v.Path] = v.Url
 	}
 
