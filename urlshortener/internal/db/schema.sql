@@ -1,0 +1,6 @@
+CREATE TABLE short_urls (
+    id SERIAL PRIMARY KEY,
+    short_path VARCHAR(255) UNIQUE NOT NULL,
+    original_url TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,9 +1,13 @@
 package urlshort
 
 import (
+	"context"
 	"encoding/json"
+	"github.com/jackc/pgx/v5"
 	"gopkg.in/yaml.v2"
+	"log"
 	"net/http"
+	"urlshortener/internal/repository"
 )
 
 // PathToUrl represents a single path-to-URL mapping from YAML
@@ -89,4 +93,24 @@ func parseJSON(jsonBlob []byte) (map[string]string, error) {
 	}
 
 	return pathToUrls, nil
+}
+
+func DBHandler(repo repository.URLRepository, fallback http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		shortPath := r.URL.Path
+
+		shortURL, err := repo.GetShortURL(context.Background(), shortPath)
+
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				fallback.ServeHTTP(w, r)
+				return
+			}
+			log.Printf("Database error fetching path '%s': %v", shortPath, err)
+			http.Error(w, "Internal server error connecting to database", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, shortURL.OriginalUrl, http.StatusFound)
+	}
 }
